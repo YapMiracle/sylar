@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <memory>
 #include <list>
+#include <strstream>
+#include <fstream>
 
 namespace YAP {
 //日志事件
@@ -43,6 +45,7 @@ public:
     std::string format(LogEvent::ptr event);
 
 private:
+
 };
 
 //日志输出地
@@ -50,11 +53,12 @@ class LogAppender {
 public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender() {}
-    void log(LogLevel::Level level, LogEvent::ptr event)
-    {
-    }
-
+    virtual void log(LogLevel::Level level, LogEvent::ptr event) = 0;
+    void setFormatter(const LogFormatter::ptr formatter) { m_formatter = formatter;}
+    LogFormatter::ptr getFormatter() const { return m_formatter; }
 private:
+    LogLevel::Level m_level;
+    LogFormatter::ptr m_formatter;
 };
 
 //日志器
@@ -78,6 +82,23 @@ private:
     std::string m_name;                     // name
     LogLevel::Level m_level;                // level
     std::list<LogAppender::ptr> m_appenders;// appenders collections
+};
+
+class FileLogAppender: public LogAppender{
+public:
+    typedef std::shared_ptr<FileLogAppender> ptr;
+    FileLogAppender(const std::string& name);
+    void log(LogLevel::Level level, LogEvent::ptr event) override;
+    bool reopen();
+private:
+    std::string m_filename;
+    std::ofstream m_filestream;
+};
+
+class StdoutLogAppender: public LogAppender{
+public:
+    typedef std::shared_ptr<StdoutLogAppender> ptr;
+    void log(LogLevel::Level level, LogEvent::ptr event) override;
 };
 } // namesapce YAP
 
